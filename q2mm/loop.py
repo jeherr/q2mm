@@ -83,7 +83,10 @@ class Loop(object):
         lines_iterator = iter(lines)
         while True:
             try:
-                line = lines_iterator.next()
+                if (sys.version_info > (3, 0)):
+                    line = next(lines_iterator)
+                else:
+                    line = lines_iterator.next()
             except StopIteration:
                 return self.ff
             cols = line.split()

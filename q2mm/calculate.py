@@ -81,8 +81,14 @@ def main(args):
            it's a string, it will be converted into a list of strings.
     """
     # Should be a list of strings for use by argparse. Ensure that's the case.
-    if isinstance(args, basestring):
-        args.split()
+    # basestring is deprecated in python3, str is probably safe to use in both
+    # but should be tested, for now sys.version_info switch can handle it
+    if (sys.version_info > (3, 0)):
+        if isinstance(args, str):
+            args = args.split()
+    else:
+        if isinstance(args, basestring):
+            args = args.split()
     parser = return_calculate_parser()
     opts = parser.parse_args(args)
     # This makes a dictionary that only contains the arguments related to
