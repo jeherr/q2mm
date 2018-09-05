@@ -228,8 +228,12 @@ def main(args):
     Imports a force field object, which contains a list of all the available
     parameters. Returns a list of only the user selected parameters.
     '''
-    if isinstance(args, basestring):
-        args = args.split()
+    if (sys.version_info > (3, 0)):
+        if isinstance(args, str):
+            args = args.split()
+    else:
+        if isinstance(args, basestring):
+            args = args.split()
     parser = return_params_parser()
     opts = parser.parse_args(args)
     if opts.average or opts.check:
