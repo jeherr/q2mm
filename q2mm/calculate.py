@@ -25,7 +25,10 @@ import sys
 # chain.from_iterable flattens a list of lists similar to:
 #   [child for parent in grandparent for child in parent]
 # However, I think chain.from_iterable works on any number of nested lists.
-from itertools import chain, izip
+if (sys.version_info > (3, 0)):
+    from itertools import chain
+else:
+    from itertools import chain, izip
 from textwrap import TextWrapper
 
 import constants as co
@@ -194,11 +197,11 @@ def main(args):
         sub_names = opts.subnames
     if opts.fake:
         data = collect_data_fake(
-            commands, inps, direc=opts.directory, invert=opts.invert, 
+            commands, inps, direc=opts.directory, invert=opts.invert,
             sub_names=sub_names)
     else:
         data = collect_data(
-            commands, inps, direc=opts.directory, invert=opts.invert, 
+            commands, inps, direc=opts.directory, invert=opts.invert,
             sub_names=sub_names)
     # Adds weights to the data points in the data list.
     if opts.weight:
@@ -578,7 +581,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         # Unlike most datatypes, these Datum only get the attributes _lbl,
         # val and wht. This is to ensure that making and working with these
         # reference text files isn't too cumbersome.
-        data.extend(collect_reference(os.path.join(direc, filename)))    
+        data.extend(collect_reference(os.path.join(direc, filename)))
     # MACROMODEL MM3* CURRENT PARAMETER VALUES
     filenames = chain.from_iterable(coms['mp'])
     for comma_filenames in filenames:
@@ -1076,7 +1079,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         temp = []
         for filename in filenames:
             temp.append(collect_structural_data_from_tinker_log(
-                filename, inps, outs, direc, 'tea', 'pre', 'ea', idx_1 = idx_1)) 
+                filename, inps, outs, direc, 'tea', 'pre', 'ea', idx_1 = idx_1))
         avg = sum([x.val for x in temp]) / len(temp)
         for datum in temp:
             datum.val -= avg
@@ -1087,7 +1090,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         temp = []
         for filename in filenames:
             temp.append(collect_structural_data_from_tinker_log(
-                filename, inps, outs, direc, 'teo', 'opt', 'eo', idx_1 = idx_1)) 
+                filename, inps, outs, direc, 'teo', 'opt', 'eo', idx_1 = idx_1))
         zero = min([x.val for x in temp])
         for datum in temp:
             datum.val -= zero
@@ -1098,7 +1101,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         temp = []
         for filename in filenames:
             temp.append(collect_structural_data_from_tinker_log(
-                filename, inps, outs, direc, 'teao', 'opt', 'eao', idx_1 = idx_1)) 
+                filename, inps, outs, direc, 'teao', 'opt', 'eao', idx_1 = idx_1))
         avg = sum([x.val for x in temp]) / len(temp)
         for datum in temp:
             datum.val -= avg
@@ -1117,15 +1120,26 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         # I'm not even sure if we can use dummy atoms in TINKER.
         low_tri_idx = np.tril_indices_from(hess)
         low_tri = hess[low_tri_idx]
-        data.extend([datatypes.Datum(
-            val=e,
-            com='th',
-            typ='h',
-            src_1=hes.filename,
-            idx_1=x + 1,
-            idx_2=y + 1)
-                for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                val=e,
+                com='th',
+                typ='h',
+                src_1=hes.filename,
+                idx_1=x + 1,
+                idx_2=y + 1)
+                    for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                val=e,
+                com='th',
+                typ='h',
+                src_1=hes.filename,
+                idx_1=x + 1,
+                idx_2=y + 1)
+                    for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # TINKER EIGENMATRIX USING GAUSSIAN EIGENVECTORS
     filenames = chain.from_iterable(coms['tgeig'])
     for comma_filenames in filenames:
@@ -1151,16 +1165,28 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             raise
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        data.extend([datatypes.Datum(
-            val=e,
-            com='tgeig',
-            typ='eig',
-            src_1=name_xyz,
-            src_2=name_gau_log,
-            idx_1=x + 1,
-            idx_2=y + 1)
-                for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                val=e,
+                com='tgeig',
+                typ='eig',
+                src_1=name_xyz,
+                src_2=name_gau_log,
+                idx_1=x + 1,
+                idx_2=y + 1)
+                    for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                val=e,
+                com='tgeig',
+                typ='eig',
+                src_1=name_xyz,
+                src_2=name_gau_log,
+                idx_1=x + 1,
+                idx_2=y + 1)
+                    for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # MACROMODEL BONDS
     filenames = chain.from_iterable(coms['mb'])
     for filename in filenames:
@@ -1360,15 +1386,26 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         datatypes.replace_minimum(hess, value=invert)
         low_tri_idx = np.tril_indices_from(hess)
         low_tri = hess[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='jh',
-                    typ='h',
-                    src_1=jin.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='jh',
+                        typ='h',
+                        src_1=jin.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='jh',
+                        typ='h',
+                        src_1=jin.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # GAUSSIAN HESSIAN
     filenames = chain.from_iterable(coms['gh'])
     for filename in filenames:
@@ -1389,15 +1426,26 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         # WARNING: This option may need to be mass weighted!
         low_tri_idx = np.tril_indices_from(hess)
         low_tri = hess[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='gh',
-                    typ='h',
-                    src_1=log.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='gh',
+                        typ='h',
+                        src_1=log.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='gh',
+                        typ='h',
+                        src_1=log.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # MACROMODEL HESSIAN
     filenames = chain.from_iterable(coms['mh'])
     for filename in filenames:
@@ -1413,15 +1461,26 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         hess = datatypes.check_mm_dummy(hess, hess_dummies)
         low_tri_idx = np.tril_indices_from(hess)
         low_tri = hess[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='mh',
-                    typ='h',
-                    src_1=mae.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mh',
+                        typ='h',
+                        src_1=mae.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mh',
+                        typ='h',
+                        src_1=mae.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # JAGUAR EIGENMATRIX
     filenames = chain.from_iterable(coms['jeigz'])
     for comma_sep_filenames in filenames:
@@ -1453,16 +1512,28 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         eigenmatrix = np.diag(eigenmatrix)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='jeigz',
-                    typ='eig',
-                    src_1=jin.filename,
-                    src_2=out.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='jeigz',
+                        typ='eig',
+                        src_1=jin.filename,
+                        src_2=out.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='jeigz',
+                        typ='eig',
+                        src_1=jin.filename,
+                        src_2=out.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # GAUSSIAN EIGENMATRIX
     filenames = chain.from_iterable(coms['geigz'])
     for filename in filenames:
@@ -1473,15 +1544,26 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         eigenmatrix = np.diag(evals)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='geigz',
-                    typ='eig',
-                    src_1=log.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='geigz',
+                        typ='eig',
+                        src_1=log.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='geigz',
+                        typ='eig',
+                        src_1=log.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # MACROMODEL EIGENMATRIX USING JAGUAR EIGENVECTORS
     filenames = chain.from_iterable(coms['mjeig'])
     for comma_sep_filenames in filenames:
@@ -1507,16 +1589,28 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             raise
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='mjeig',
-                    typ='eig',
-                    src_1=mae.filename,
-                    src_2=out.filename,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mjeig',
+                        typ='eig',
+                        src_1=mae.filename,
+                        src_2=out.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mjeig',
+                        typ='eig',
+                        src_1=mae.filename,
+                        src_2=out.filename,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     # MACROMODEL EIGENMATRIX USING GAUSSIAN EIGENVECTORS
     filenames = chain.from_iterable(coms['mgeig'])
     for comma_filenames in filenames:
@@ -1541,16 +1635,28 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             raise
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        data.extend([datatypes.Datum(
-                    val=e,
-                    com='mgeig',
-                    typ='eig',
-                    src_1=name_mae,
-                    src_2=name_gau_log,
-                    idx_1=x + 1,
-                    idx_2=y + 1)
-                     for e, x, y in izip(
-                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+        if (sys.version_info > (3, 0)):
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mgeig',
+                        typ='eig',
+                        src_1=name_mae,
+                        src_2=name_gau_log,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in zip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
+        else:
+            data.extend([datatypes.Datum(
+                        val=e,
+                        com='mgeig',
+                        typ='eig',
+                        src_1=name_mae,
+                        src_2=name_gau_log,
+                        idx_1=x + 1,
+                        idx_2=y + 1)
+                         for e, x, y in izip(
+                        low_tri, low_tri_idx[0], low_tri_idx[1])])
     logger.log(15, 'TOTAL DATA POINTS: {}'.format(len(data)))
     return np.array(data, dtype=datatypes.Datum)
 

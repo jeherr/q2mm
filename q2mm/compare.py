@@ -12,13 +12,14 @@ and :math:`x_c` is the calculated or force field's value for the data point.
 '''
 from __future__ import print_function
 from collections import defaultdict
-from itertools import izip
+import sys
+if (sys.version_info < (3, 0)):
+    from itertools import izip
 import argparse
 from argparse import RawTextHelpFormatter
 import logging
 import logging.config
 import numpy as np
-import sys
 
 import calculate
 import constants as co
@@ -51,11 +52,15 @@ def pretty_data_comp(r_data, c_data, output=None, doprint=False):
                    '--' + ' Weight '.center(7, '-') +
                    '--' + ' R. Value '.center(11, '-') +
                    '--' + ' C. Value '.center(11, '-') +
-                   '--' + ' Score '.center(11, '-') + 
+                   '--' + ' Score '.center(11, '-') +
                    '--' + ' Row ' + '--')
     score_typ = defaultdict(float)
     score_tot = 0.
-    for r, c in izip(r_data, c_data):
+    if (sys.version_info > (3, 0)):
+        rc_zip = zip(r_data, c_data)
+    else:
+        rc_zip = izip(r_data, c_data)
+    for r, c in rc_zip:
         # logger.log(1, '>>> {} {}'.format(r, c))
         # Double check data types.
         # Had to change to check from the FF data type because reference data
@@ -249,7 +254,11 @@ def calculate_score(r_data, c_data):
     Calculates the objective function score.
     """
     score_tot = 0.
-    for r_datum, c_datum in izip(r_data, c_data):
+    if (sys.version_info > (3, 0)):
+        rc_zip = zip(r_data, c_data)
+    else:
+        rc_zip = izip(r_data, c_data)
+    for r_datum, c_datum in rc_zip:
         # Could add a check here to assure that the data points are aligned.
         # Ex.) assert r_datum.ind_1 == c_datum.ind_1, 'Oh no!'
 
