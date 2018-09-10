@@ -103,8 +103,12 @@ def main(args):
     #  'mb': [['a1.01.mae'], ['b1.01.mae']],
     #  'jeig': [['a1.01.in,a1.out', 'b1.01.in,b1.out']]
     # }
-    commands = {key: value for key, value in opts.__dict__.iteritems() if key
-                in COM_ALL and value}
+    if (sys.version_info > (3, 0)):
+        commands = {key: value for key, value in iter(opts.__dict__.items()) if key
+                    in COM_ALL and value}
+    else:
+        commands = {key: value for key, value in opts.__dict__.iteritems() if key
+                    in COM_ALL and value}
     # Add in the empty commands. I'd rather not do this, but it makes later
     # coding when collecting data easier.
     for command in COM_ALL:
@@ -144,7 +148,11 @@ def main(args):
     # commands_for_filenames, which contains all of the data types associated
     # with the given file.
     # Stuff below doesn't need both comma separated filenames simultaneously.
-    for filename, commands_for_filename in commands_for_filenames.iteritems():
+    if (sys.version_info > (3, 0)):
+        fname_cmds = iter(commands_for_filenames.items())
+    else:
+        fname_cmds = commands_for_filenames.iteritems()
+    for filename, commands_for_filename in fname_cmds:
         logger.log(1, '>>> filename: {}'.format(filename))
         logger.log(1, '>>> commands_for_filename: {}'.format(
             commands_for_filename))
@@ -1798,13 +1806,22 @@ def sort_commands_by_filename(commands):
     dictionary of the sorted commands
     '''
     sorted_commands = {}
-    for command, groups_filenames in commands.iteritems():
-        for comma_separated in chain.from_iterable(groups_filenames):
-            for filename in comma_separated.split(','):
-                if filename in sorted_commands:
-                    sorted_commands[filename].append(command)
-                else:
-                    sorted_commands[filename] = [command]
+    if (sys.version_info > (3, 0)):
+        for command, groups_filenames in iter(commands.items()):
+            for comma_separated in chain.from_iterable(groups_filenames):
+                for filename in comma_separated.split(','):
+                    if filename in sorted_commands:
+                        sorted_commands[filename].append(command)
+                    else:
+                        sorted_commands[filename] = [command]
+    else:
+        for command, groups_filenames in commands.iteritems():
+            for comma_separated in chain.from_iterable(groups_filenames):
+                for filename in comma_separated.split(','):
+                    if filename in sorted_commands:
+                        sorted_commands[filename].append(command)
+                    else:
+                        sorted_commands[filename] = [command]
     return sorted_commands
 
 # Will also have to be updated. Maybe the Datum class too and how it responds
