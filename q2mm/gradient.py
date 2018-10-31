@@ -654,7 +654,7 @@ def return_jacobian(jacob, par_file):
     with open(par_file, 'r') as f:
         logger.log(15, 'READING: {}'.format(par_file))
         f.readline() # Labels.
-        whts = map(float, f.readline().split(',')) # Weights.
+        whts = list(map(float, f.readline().split(','))) # Weights.
         f.readline() # Reference values.
         f.readline() # Original values.
         # This is only for central differentiation.
@@ -726,9 +726,9 @@ def update_params(params, changes):
     """
     try:
         if (sys.version_info > (3, 0)):
-            zip_param_changes = zip(params, changes)
+            zip_params_changes = zip(params, changes)
         else:
-            zip_param_changes = itertools.izip(params, changes)
+            zip_params_changes = itertools.izip(params, changes)
         for param, change in zip_params_changes:
             param.value += change * param.step
     except datatypes.ParamError as e:

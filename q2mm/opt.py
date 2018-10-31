@@ -9,6 +9,7 @@ import logging.config
 import numpy as np
 import re
 import textwrap
+import sys
 
 import calculate
 import compare
@@ -374,7 +375,11 @@ def pretty_param_changes(params, changes, method=None, level=20):
             '--')
         # This calculation of the real parameter step size is also repeated.
         # The things I do for a good looking log.
-        for param, change in itertools.izip(params, changes):
+        if (sys.version_info > (3, 0)):
+            zip_param_change = zip(params, changes)
+        else:
+            zip_param_change = itertools.izip(params, changes)
+        for param, change in zip_param_change:
             logger.log(
                 level,
                 '  ' + '{}'.format(param).ljust(34, ' ') +
