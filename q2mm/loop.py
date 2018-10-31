@@ -111,10 +111,16 @@ class Loop(object):
             if cols[0] == 'LOOP':
                 # Read lines that will be looped over.
                 inner_loop_lines = []
-                line = lines_iterator.next()
+                if (sys.version_info > (3, 0)):
+                    line = next(lines_iterator)
+                else:
+                    line = lines_iterator.next()
                 while line.split()[0] != 'END':
                     inner_loop_lines.append(line)
-                    line = lines_iterator.next()
+                    if (sys.version_info > (3, 0)):
+                        line = next(lines_iterator)
+                    else:
+                        line = lines_iterator.next()
                 # Make loop object and populate attributes.
                 loop = Loop()
                 loop.convergence = float(cols[1])

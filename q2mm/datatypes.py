@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import os
 import re
+import sys
 
 import constants as co
 import filetypes
@@ -95,10 +96,16 @@ class Param(object):
                 raise
         if self._step == 0.:
             self._step = 0.1
-        if isinstance(self._step, basestring):
-            return float(self._step) * self.value
+        if (sys.version_info > (3, 0)):
+            if isinstance(self._step, str):
+                return float(self._step) * self.value
+            else:
+                return self._step
         else:
-            return self._step
+            if isinstance(self._step, basestring):
+                return float(self._step) * self.value
+            else:
+                return self._step
     @step.setter
     def step(self, x):
         self._step = x

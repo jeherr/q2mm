@@ -85,13 +85,17 @@ def pretty_data_comp(r_data, c_data, output=None, doprint=False):
             else:
                 score_typ[c.typ + '-o'] += score
         strings.append('  {:<30}  {:>7.2f}  {:>11.4f}  {:>11.4f}  {:>11.4f}  '\
-                       '{:>5}  '.format(
+                       '{!s:>5}  '.format(
                         c.lbl, r.wht, r.val, c.val, score, c.ff_row))
     strings.append('-' * 89)
     strings.append('{:<20} {:20.4f}'.format('Total score:', score_tot))
     strings.append('{:<20} {:20d}'.format('Num. data points:', len(r_data)))
     strings.append('-' * 89)
-    for k, v in score_typ.iteritems():
+    if (sys.version_info > (3, 0)):
+        score_typ_iter = iter(score_typ.items())
+    else:
+        score_typ_iter = score_typ.iteritems()
+    for k, v in score_typ_iter:
         strings.append('{:<20} {:20.4f}'.format(k + ':', v))
     if output:
         with open(output, 'w') as f:

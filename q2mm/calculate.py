@@ -193,7 +193,11 @@ def main(args):
     if opts.norun or opts.fake:
         logger.log(15, "  -- Skipping backend calculations.")
     else:
-        for filename, some_class in inps.iteritems():
+        if (sys.version_info > (3, 0)):
+            inps_iter = iter(inps.items())
+        else:
+            inps_iter = inps.iteritems()
+        for filename, some_class in inps_iter:
             logger.log(1, '>>> filename: {}'.format(filename))
             logger.log(1, '>>> some_class: {}'.format(some_class))
             # Works if some class is None too.
