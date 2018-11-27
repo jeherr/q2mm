@@ -177,6 +177,13 @@ class Loop(object):
                     ff_lines=self.ff.lines,
                     args_ff=self.args_ff)
                 self.ff = simp.run(r_data=self.ref_data)
+            if cols[0] == 'DEVO':
+                devo = diff_evolution.DifferentialEvolution(
+                    direc=self.direc,
+                    ff=self.ff,
+                    ff_lines=self.ff.lines,
+                    args_ff=self.args_ff)
+                self.ff = devo.run(r_data=self.ref_data)
             if cols[0] == 'WGHT':
                 data_type = cols[1]
                 co.WEIGHTS[data_type] = float(cols[2])
