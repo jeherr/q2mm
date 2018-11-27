@@ -76,20 +76,7 @@ class DifferentialEvolution(opt.Optimizer):
                  args_ref=None):
         super(DifferentialEvolution, self).__init__(
             direc, ff, ff_lines, args_ff, args_ref)
-        # The current defaults err on the side of simplicity, so these are
-        # likely more ideal for smaller parameter sets. For larger parameter
-        # sets, central differentiation will take longer, and so you you will
-        # likely want to try more trial FFs per iteration. This would mean
-        # adding more max radii (ex. lagrange_radii) or more factors (ex.
-        # svd_factors).
 
-
-    # Don't worry that self.ff isn't included in self.new_ffs.
-    # opt.catch_run_errors will know what to do if self.new_ffs
-    # is None.
-    @property
-    def best_ff(self):
-        return sorted(self.new_ffs, key=lambda x: x.score)[0]
 
     def objective_function(self, new_ff_params):
         new_ff = copy.deepcopy(self.ff)
@@ -140,33 +127,10 @@ class DifferentialEvolution(opt.Optimizer):
         result = differential_evolution(objective, param_bounds, maxiter=self.maxiter,
             popsize=10, disp=True, polish=False)
         print(result.x, result.fun)
-        exit(0)
-        # Report how many trial FFs were generated.
-        logger.log(20, '  -- Generated {} trial force field(s).'.format(
-                len(self.new_ffs)))
-        # If there are any trials, test them.
-        if self.new_ffs:
-            logger.log(20, '~~ EVALUATING TRIAL FF(S) ~~'.rjust(79, '~'))
-            for ff in self.new_ffs:
-                data = opt.cal_ff(ff, self.args_ff, parent_ff=self.ff)
-                # Shouldn't need to zero anymore.
-                ff.score = compare.compare_data(ref_data, data)
-                opt.pretty_ff_results(ff)
-            self.new_ffs = sorted(
-                self.new_ffs, key=lambda x: x.score)
-            # Check for improvement.
-            if self.new_ffs[0].score < self.ff.score:
-                ff = self.new_ffs[0]
-                logger.log(
-                    20, '~~ GRADIENT FINISHED WITH IMPROVEMENTS ~~'.rjust(
-                        79, '~'))
-                opt.pretty_ff_results(self.ff, level=20)
-                opt.pretty_ff_results(ff, level=20)
-                # Copy parameter derivatives from original FF to save time in
-                # case we move onto simplex immediately after this.
-                copy_derivs(self.ff, ff)
-            else:
-                ff = self.ff
+        if result.fun < self.ff.score:
+            ff = copy.deepcopy(self.ff)
+            for idx, new_value in enumerate(result.x):
+                new_ff.params[idx].value = new_value
+            return ff
         else:
-            ff = self.ff
-        return ff
+            return self.ff
