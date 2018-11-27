@@ -17,6 +17,7 @@ import gradient
 import opt
 import parameters
 import simplex
+import diff_evolution
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,14 @@ class Loop(object):
                 logger.log(20, '~~ SELECTING PARAMETERS ~~'.rjust(79, '~'))
                 self.ff.params = parameters.trim_params_by_file(
                     self.ff.params, os.path.join(self.direc, cols[1]))
+            if cols[0] == 'DEVO':
+                devo = diff_evolution.DifferentialEvolution(
+                    direc=self.direc,
+                    ff=self.ff,
+                    ff_lines=self.ff.lines,
+                    args_ff=self.args_ff)
+                devo.maxiter = int(cols[1]) 
+                self.ff = devo.run(ref_data=self.ref_data)
             if cols[0] == 'LOOP':
                 # Read lines that will be looped over.
                 inner_loop_lines = []
@@ -177,13 +186,6 @@ class Loop(object):
                     ff_lines=self.ff.lines,
                     args_ff=self.args_ff)
                 self.ff = simp.run(r_data=self.ref_data)
-            if cols[0] == 'DEVO':
-                devo = diff_evolution.DifferentialEvolution(
-                    direc=self.direc,
-                    ff=self.ff,
-                    ff_lines=self.ff.lines,
-                    args_ff=self.args_ff)
-                self.ff = devo.run(r_data=self.ref_data)
             if cols[0] == 'WGHT':
                 data_type = cols[1]
                 co.WEIGHTS[data_type] = float(cols[2])

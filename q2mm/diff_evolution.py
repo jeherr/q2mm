@@ -83,32 +83,6 @@ class DifferentialEvolution(opt.Optimizer):
         # adding more max radii (ex. lagrange_radii) or more factors (ex.
         # svd_factors).
 
-        # Whether or not to generate parameters with these methods.
-        self.do_lstsq = False
-        self.do_lagrange = True
-        self.do_levenberg = False
-        self.do_newton = True
-        self.do_svd = True
-
-        # Particular settings for each method.
-        # LEAST SQUARES
-        self.lstsq_cutoffs = None
-        self.lstsq_radii = [1., 10.]
-        # LAGRANGE
-        self.lagrange_factors = [0.01, 0.1, 1., 10.]
-        self.lagrange_cutoffs = None
-        self.lagrange_radii = [0.1, 10.]
-        # LEVENBERG-MARQUARDT
-        self.levenberg_factors = [0.01, 0.1, 1., 10.]
-        self.levenberg_cutoffs = None
-        self.levenberg_radii = [0.1, 10.]
-        # NEWTON-RAPHSON
-        self.newton_cutoffs = None
-        self.newton_radii = [1., 10.]
-        # SVD
-        self.svd_factors = [0.001, 0.01, 0.1, 1., 10.]
-        self.svd_cutoffs = [0.1, 10.]
-        self.svd_radii = None
 
     # Don't worry that self.ff isn't included in self.new_ffs.
     # opt.catch_run_errors will know what to do if self.new_ffs
@@ -117,8 +91,15 @@ class DifferentialEvolution(opt.Optimizer):
     def best_ff(self):
         return sorted(self.new_ffs, key=lambda x: x.score)[0]
 
-	def objective_function(ff_params):
-		compare.calculate_score(ref_data, self.ff.data)
+    def objective_function(self, new_ff_params):
+        new_ff = copy.deepcopy(self.ff)
+        for idx, new_value in enumerate(new_ff_params):
+            new_ff.params[idx].value = new_value
+        new_ff.export_ff(lines=self.ff.lines)
+        new_ff.data = calculate.main(self.args_ff)
+        new_ff.score = compare.calculate_score(self.ref_data, new_ff.data)
+        opt.pretty_ff_results(new_ff, level=20)
+        return new_ff.score
 
     @opt.catch_run_errors
     def run(self, ref_data=None, restart=None):
@@ -135,7 +116,9 @@ class DifferentialEvolution(opt.Optimizer):
         """
         # We need reference data if you didn't provide it.
         if ref_data is None:
-            ref_data = opt.return_ref_data(self.args_ref)
+            self.ref_data = opt.return_ref_data(self.args_ref)
+        else:
+            self.ref_data = ref_data
 
         # We need the initial FF data.
         if self.ff.data is None:
@@ -152,60 +135,12 @@ class DifferentialEvolution(opt.Optimizer):
         logger.log(20, '~~ DIFFERENTIAL EVOLUTION OPTIMIZATION ~~'.rjust(79, '~'))
         logger.log(20, 'INIT FF SCORE: {}'.format(self.ff.score))
         opt.pretty_ff_results(self.ff, level=20)
-
-        if restart:
-            par_file = restart
-            logger.log(20, '  -- Restarting gradient from central '
-                       'differentiation file {}.'.format(par_file))
-        else:
-            # We need a file to hold the differentiated parameter data.
-            par_files = glob.glob(os.path.join(self.direc, 'par_diff_???.txt'))
-            if par_files:
-                par_files.sort()
-                most_recent_par_file = par_files[-1]
-                most_recent_par_file = most_recent_par_file.split('/')[-1]
-                most_recent_num = most_recent_par_file[9:12]
-                num = int(most_recent_num) + 1
-                par_file = 'par_diff_{:03d}.txt'.format(num)
-            else:
-                par_file = 'par_diff_001.txt'
-            logger.log(20, '  -- Generating central differentiation '
-                       'file {}.'.format(par_file))
-            f = open(os.path.join(self.direc, par_file), 'w')
-            csv_writer = csv.writer(f)
-            # Row 1 - Labels
-            # Row 2 - Weights
-            # Row 3 - Reference data values
-            # Row 4 - Initial FF data values
-            csv_writer.writerow([x.lbl for x in ref_data])
-            csv_writer.writerow([x.wht for x in ref_data])
-            csv_writer.writerow([x.val for x in ref_data])
-            csv_writer.writerow([x.val for x in self.ff.data])
-            logger.log(20, '~~ DIFFERENTIATING PARAMETERS ~~'.rjust(79, '~'))
-            # Save many FFs, each with their own parameter sets.
-            ffs = opt.differentiate_ff(self.ff)
-            logger.log(20, '~~ SCORING DIFFERENTIATED PARAMETERS ~~'.rjust(
-                79, '~'))
-            for ff in ffs:
-                ff.export_ff(lines=self.ff.lines)
-                logger.log(20, '  -- Calculating {}.'.format(ff))
-                data = calculate.main(self.args_ff)
-                ff.score = compare.compare_data(ref_data, data)
-                opt.pretty_ff_results(ff)
-                # Write the data rather than storing it in memory. For large
-                # parameter sets, this could consume GBs of memory otherwise!
-                csv_writer.writerow([x.val for x in data])
-            f.close()
-
-            # Make sure we have derivative information. Used for NR.
-            #
-            # The derivatives are useful for checking up on the progress of the
-            # optimization and for deciding which parameters to use in a
-            # subsequent simplex optimization.
-            #
-            # Still need a way to do this with the resatrt file.
-            opt.param_derivs(self.ff, ffs)
-
+        objective = lambda x: self.objective_function(x)
+        param_bounds = [(-10, 10) for _ in range(len(self.ff.params))]
+        result = differential_evolution(objective, param_bounds, maxiter=self.maxiter,
+            popsize=10, disp=True, polish=False)
+        print(result.x, result.fun)
+        exit(0)
         # Report how many trial FFs were generated.
         logger.log(20, '  -- Generated {} trial force field(s).'.format(
                 len(self.new_ffs)))
