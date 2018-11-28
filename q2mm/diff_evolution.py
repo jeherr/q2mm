@@ -131,6 +131,7 @@ class DifferentialEvolution(opt.Optimizer):
             ff = copy.deepcopy(self.ff)
             for idx, new_value in enumerate(result.x):
                 new_ff.params[idx].value = new_value
+            opt.pretty_ff_results(new_ff, level=20)
             return ff
         else:
             return self.ff
