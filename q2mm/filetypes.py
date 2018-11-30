@@ -565,18 +565,18 @@ class GaussLog(File):
             # if the high quality modes have been read already.
             while True:
                 try:
-                    line = file_iterator.next()
+                    line = next(file_iterator)
                 except:
                     # End of file.
                     break
                 # Gathering some geometric information.
                 if 'orientation:' in line:
                     self._structures.append(Structure())
-                    file_iterator.next()
-                    file_iterator.next()
-                    file_iterator.next()
-                    file_iterator.next()
-                    line = file_iterator.next()
+                    next(file_iterator)
+                    next(file_iterator)
+                    next(file_iterator)
+                    next(file_iterator)
+                    line = next(file_iterator)
                     while not '---' in line:
                         cols = line.split()
                         self._structures[-1].atoms.append(
@@ -584,7 +584,7 @@ class GaussLog(File):
                                  x=float(cols[3]),
                                  y=float(cols[4]),
                                  z=float(cols[5])))
-                        line = file_iterator.next()
+                        line = next(file_iterator)
                     logger.log(5, '  -- Found {} atoms.'.format(
                             len(self._structures[-1].atoms)))
                 elif 'Harmonic' in line:
@@ -621,7 +621,7 @@ class GaussLog(File):
                         evecs.append([])
 
                     # Moving on to the reduced masses.
-                    line = file_iterator.next()
+                    line = next(file_iterator)
                     cols = line.split()
                     # Again, trim the "Reduced masses ---".
                     # It's "Red. masses --" for without "hpmodes".
@@ -630,7 +630,7 @@ class GaussLog(File):
                         force_constants[i] = force_constants[i] / mass
 
                     # Now we are on the line with the force constants.
-                    line = file_iterator.next()
+                    line = next(file_iterator)
                     cols = line.split()
                     # Trim "Force constants ---". It's "Frc consts --" without
                     # "hpmodes".
@@ -646,19 +646,18 @@ class GaussLog(File):
                     #         factor is inside constants module)
 
                     # Skip the IR intensities.
-                    file_iterator.next()
+                    next(file_iterator)
                     # This is different depending on whether you use "hpmodes".
-                    line = file_iterator.next()
+                    line = next(file_iterator)
                     # "Coord" seems to only appear when the "hpmodes" is used.
                     if 'Coord' in line:
                         hpmodes = True
                     # This is different depending on whether you use
                     # "freq=projected".
-                    line = file_iterator.next()
+                    line = next(file_iterator)
                     # The "projected" keyword seems to add "IRC Coupling".
                     if 'IRC Coupling' in line:
-                        line = file_iterator.next()
-
+                        line = next(file_iterator)
                     # We're on to the eigenvectors.
                     # Until the end of this section containing the eigenvectors,
                     # the number of columns remains constant. When that changes,
@@ -684,7 +683,7 @@ class GaussLog(File):
                         # co.MASSES currently has the average mass.
                         # Gaussian may use the mass of the most abundant
                         # isotope. This may be a problem.
-                        mass_sqrt = np.sqrt(co.MASSES.items()[int(cols[1]) - 1][1])
+                        mass_sqrt = np.sqrt(list(co.MASSES.items())[int(cols[1]) - 1][1])
 
                         cols = cols[2:]
                         # This corresponds to the same line still, but without
@@ -717,7 +716,7 @@ class GaussLog(File):
                                 for useless in range(3):
                                     x = float(cols.pop(0))
                                     evecs[i].append(x * mass_sqrt)
-                        line = file_iterator.next()
+                        line = next(file_iterator)
                         cols = line.split()
 
                     # Here the overall number of eigenvalues and eigenvectors is
@@ -1998,7 +1997,7 @@ class MacroModel(File):
     def read_line_for_bond(self, line):
         match = co.RE_BOND.match(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(2)])
+            atom_nums = list(map(int, [match.group(1), match.group(2)]))
             value = float(match.group(3))
             comment = match.group(4).strip()
             ff_row = int(match.group(5))
@@ -2009,8 +2008,8 @@ class MacroModel(File):
     def read_line_for_angle(self, line):
         match = co.RE_ANGLE.match(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(2),
-                                  match.group(3)])
+            atom_nums = list(map(int, [match.group(1), match.group(2),
+                                  match.group(3)]))
             value = float(match.group(4))
             comment = match.group(5).strip()
             ff_row = int(match.group(6))
@@ -2021,8 +2020,8 @@ class MacroModel(File):
     def read_line_for_torsion(self, line):
         match = co.RE_TORSION.match(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(2),
-                                  match.group(3), match.group(4)])
+            atom_nums = list(map(int, [match.group(1), match.group(2),
+                                  match.group(3), match.group(4)]))
             value = float(match.group(5))
             comment = match.group(6).strip()
             ff_row = int(match.group(7))

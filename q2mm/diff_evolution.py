@@ -77,6 +77,23 @@ class DifferentialEvolution(opt.Optimizer):
         super(DifferentialEvolution, self).__init__(
             direc, ff, ff_lines, args_ff, args_ref)
 
+    def set_param_bounds(self):
+        bounds = []
+        for param in self.ff.params:
+            if param.ptype == "be":
+                bounds.append(0.7, 3.0)
+            elif param.ptype == "bf":
+                bounds.append(0.0, 20.0)
+            elif param.ptype == "q":
+                bounds.append(-10.0, 10.0)
+            elif param.ptype == "ae":
+                bounds.append(50.0, 180.0)
+            elif param.ptype == "af":
+                bounds.append(0.1, 10.0)
+            elif param.ptype == "df":
+                bounds.append(-20.0, 20.0)
+        return bounds
+
 
     def objective_function(self, new_ff_params):
         new_ff = copy.deepcopy(self.ff)
@@ -122,8 +139,10 @@ class DifferentialEvolution(opt.Optimizer):
         logger.log(20, '~~ DIFFERENTIAL EVOLUTION OPTIMIZATION ~~'.rjust(79, '~'))
         logger.log(20, 'INIT FF SCORE: {}'.format(self.ff.score))
         opt.pretty_ff_results(self.ff, level=20)
-        objective = lambda x: self.objective_function(x)
-        param_bounds = [(-10, 10) for _ in range(len(self.ff.params))]
+
+        exit(0)
+        param_bounds = self.set_param_bounds()
+        objective = lambda x: self.objective_function(x)        
         result = differential_evolution(objective, param_bounds, maxiter=self.maxiter,
             popsize=10, disp=True, polish=False)
         print(result.x, result.fun)
