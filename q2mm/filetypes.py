@@ -291,7 +291,7 @@ class TinkerLog(File):
         match = re.compile('Bond\s+(\d+)-(\w+)\s+(\d+)-(\w+)\s+'
             '({0})\s+({0})\s+({0})'.format(co.RE_FLOAT)).search(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(3)])
+            atom_nums = list(map(int, [match.group(1), match.group(3)]))
             value = float(match.group(6))
             return Bond(atom_nums=atom_nums, value=value)
         else:
@@ -303,8 +303,8 @@ class TinkerLog(File):
         match = re.compile('Angle\s+(\d+)-(\w+)\s+(\d+)-(\w+)\s+(\d+)-(\w+)\s+'
             '({0})\s+({0})\s+({0})'.format(co.RE_FLOAT)).search(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(3),
-                match.group(5)])
+            atom_nums = list(map(int, [match.group(1), match.group(3),
+                match.group(5)]))
             value = float(match.group(8))
             return Angle(atom_nums=atom_nums, value=value)
         else:
@@ -317,8 +317,8 @@ class TinkerLog(File):
             '(\d+)-(\w+)\s+(\d+)-(\w+)\s+({0})\s+({0})'.format(
                 co.RE_FLOAT)).search(line)
         if match:
-            atom_nums = map(int, [match.group(1), match.group(3),
-                match.group(5), match.group(7)])
+            atom_nums = list(map(int, [match.group(1), match.group(3),
+                match.group(5), match.group(7)]))
             value = float(match.group(9))
             return Angle(atom_nums=atom_nums, value=value)
         else:
@@ -474,7 +474,7 @@ class TinkerXYZ(File):
 class GaussCom(File):
     """
     Used to write Gaussian command files to run quick calculations. The ony use
-    thus far is for checking the RMS of the electrostatic potential using 
+    thus far is for checking the RMS of the electrostatic potential using
     partial charges obtained from a force field.
     """
     def __init__(self, path):
@@ -496,7 +496,7 @@ class GaussCom(File):
         self.old_chk = old_check
         if os.path.isfile('TEMP.com'):
             os.remove('TEMP.com')
-        sp.call('newzmat -ichk -ocart {} {}'.format(self.old_chk, 'TEMP'), 
+        sp.call('newzmat -ichk -ocart {} {}'.format(self.old_chk, 'TEMP'),
             shell=True)
         with open('TEMP.com', 'r') as f:
             for line in f:
@@ -507,7 +507,7 @@ class GaussCom(File):
                 if re.search('[+-]?\d,\d',line):
                     charge, multiplicity = line.split(',')
                     self.charge = charge
-                    self.multiplicity = multiplicity    
+                    self.multiplicity = multiplicity
                 if re.search('^[#]',line):
                     split = line.split()
                     for keyword in split:
@@ -557,7 +557,7 @@ class GaussCom(File):
 
     def run_gaussian(self):
         """
-        This runs the gaussian job. I have this labeled differently than our 
+        This runs the gaussian job. I have this labeled differently than our
         typical "run" functions because I don't want to use this function until
         after we have calculated and collected partial charge data.
         """
@@ -600,9 +600,9 @@ class GaussFormChk(File):
             'Cartesian Force Constants.*?\n(?P<hess>.*?)'
             'Dipole Moment',
             open(self.path, 'r').read(), flags=re.DOTALL)
-        anums = map(int, stuff.group('anums').split())
-        masses = map(float, stuff.group('masses').split())
-        coords = map(float, stuff.group('coords').split())
+        anums = list(map(int, stuff.group('anums').split()))
+        masses = list(map(float, stuff.group('masses').split()))
+        coords = list(map(float, stuff.group('coords').split()))
         coords = [coords[i:i+3] for i in range(0, len(coords), 3)]
         for anum, mass, coord in itertools.izip(anums, masses, coords):
             self.atoms.append(
@@ -1752,7 +1752,7 @@ class Mae(SchrodingerFile):
             com_opts['strs'] = True
         if any(x in ['jb', 'ja', 'jt'] for x in self.commands):
             com_opts['sp_mmo'] = True
-        if any(x in ['me', 'mea', 'mq', 'mqh', 'mqa', 'mgESP', 'mjESP'] 
+        if any(x in ['me', 'mea', 'mq', 'mqh', 'mqa', 'mgESP', 'mjESP']
             for x in self.commands):
             com_opts['sp'] = True
         # Command meig is depreciated.
@@ -1826,11 +1826,11 @@ class Mae(SchrodingerFile):
         #com += co.COM_FORM.format('FFLD', 2, 0, 0, 0, 36.7, 0, 0, 0)
         com += co.COM_FORM.format('FFLD', 2, 0, 0, 0, 0, 0, 0, 0)
         # Also may want to turn on/off cutoffs using BDCO.
-        ## We have noticed there are some oddities for electrostatic 
+        ## We have noticed there are some oddities for electrostatic
         ## interactions. In some cases "Residue-based cutoffs" are used which
         ## result inconsistent energy contributions. Inorder to keep this
         ## consistent between calculations in Q2MM and conformational seaching
-        ## EXNB is used to set all vdW and electrostatic cutoffs to 99.0 
+        ## EXNB is used to set all vdW and electrostatic cutoffs to 99.0
         ## ensuring all interactions are gathered. The seventh column is the
         ## cutoff for hydrogen bonds, and 4 is the default value.
         com += co.COM_FORM.format('EXNB', 0, 0, 0, 0, 99., 99., 4., 0)

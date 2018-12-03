@@ -244,7 +244,7 @@ class Gradient(opt.Optimizer):
             count = 0
             for data_type in data_types:
 
-              
+
                 if (sys.version_info > (3,0)):
                     rc_zip = zip(r_dict[typ],c_dict[typ])
                 else:
@@ -707,8 +707,8 @@ def return_jacobian(jacob, par_file):
             l2 = f.readline()
             if not l2:
                 break
-            inc_data = map(float, l1.split(','))
-            dec_data = map(float, l2.split(','))
+            inc_data = list(map(float, l1.split(',')))
+            dec_data = list(map(float, l2.split(',')))
             if (sys.version_info > (3, 0)):
                 data_zip = zip(inc_data, dec_data)
             else:
@@ -777,4 +777,3 @@ def update_params(params, changes):
     except datatypes.ParamError as e:
         logger.warning(e.message)
         raise
-

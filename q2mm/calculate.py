@@ -67,7 +67,7 @@ COM_TINKER     = ['ta','tao', 'tb', 'tbo',
 # Commands related to Amber.
 COM_AMBER      = ['ae']
 # All other commands.
-COM_OTHER = ['r']                           
+COM_OTHER = ['r']
 # All possible commands.
 COM_ALL = COM_GAUSSIAN + COM_JAGUAR + COM_MACROMODEL + COM_TINKER + \
           COM_AMBER + COM_OTHER
@@ -167,16 +167,16 @@ def main(args):
             #Has to be here even though this is a Gaussian Job.
             if os.path.splitext(filename)[1] == '.chk':
                 # The generated com file will be used as the input filename. It
-                # also seems best to do the gaussian calculation in the 
-                # collect_data function since we need to collect the force 
-                # fields partial charges. 
+                # also seems best to do the gaussian calculation in the
+                # collect_data function since we need to collect the force
+                # fields partial charges.
                 com_filename = os.path.splitext(filename)[0] + '.ESP.q2mm.com'
                 inps[com_filename] = filetypes.GaussCom(
                     os.path.join(opts.directory, com_filename))
                 inps[com_filename].commands = commands_for_filename
                 inps[com_filename].read_newzmat(filename)
-                
-                
+
+
 
         elif any(x in COM_TINKER for x in commands_for_filename):
             if os.path.splitext(filename)[1] == '.xyz':
@@ -714,7 +714,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
                 if ',' in thing:
                     # Note that the "stupidproperty" example would fail here
                     # because its elements can not be converted to floats.
-                    thing = map(float, thing.split(','))
+                    thing = list(map(float, thing.split(',')))
                     # Here, thing might look like:
                     #    thing = [0.1235235, 0.2352, 0.352345]
                 else:
@@ -869,7 +869,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             for thing_label in co.GAUSSIAN_ENERGIES:
                 thing = log.structures[0].props[thing_label]
                 if ',' in thing:
-                    thing = map(float, thing.split(','))
+                    thing = list(map(float, thing.split(',')))
                 else:
                     thing = [float(thing)]
                 things_to_add.append(thing)
@@ -953,7 +953,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             for thing_label in co.GAUSSIAN_ENERGIES:
                 thing = log.structures[0].props[thing_label]
                 if ',' in thing:
-                    thing = map(float, thing.split(','))
+                    thing = list(map(float, thing.split(',')))
                 else:
                     thing = [float(thing)]
                 things_to_add.append(thing)
@@ -1028,7 +1028,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             for thing_label in co.GAUSSIAN_ENERGIES:
                 thing = log.structures[0].props[thing_label]
                 if ',' in thing:
-                    thing = map(float, thing.split(','))
+                    thing = list(map(float, thing.split(',')))
                 else:
                     thing = [float(thing)]
                 things_to_add.append(thing)
@@ -1297,7 +1297,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
                             src_1=filename,
                             idx_1=idx_1 + 1,
                             atm_1=atom.index))
-    # MACROMODEL+GUASSIAN ESP   
+    # MACROMODEL+GUASSIAN ESP
     filenames = chain.from_iterable(coms['mgESP'])
     for comma_filenames in filenames:
         charges_list = []
@@ -1332,7 +1332,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
                             src_1= name_mae,
                             src_2='gaussian',
                             idx_1 = 1))
-    # MACROMODEL+JAGUAR ESP   
+    # MACROMODEL+JAGUAR ESP
     ## This does not work, I still need to write code to support Jaguaer. -TR
     filenames = chain.from_iterable(coms['mjESP'])
     for comma_filenames in filenames:
@@ -1349,7 +1349,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         ###Filler for ESP calculations####
         ### This is what is used in anna's code
         current_RMS = run_ChelpG_inp.run_JCHelpG(charges_list,name_jag_chk)
-        
+
         ### End of filler
         if current_RMS < 0:
             sys.exit("Error while computing RMS. Exiting")
@@ -1918,7 +1918,7 @@ def sort_commands_by_filename(commands):
     return sorted_commands
 
 # Will also have to be updated. Maybe the Datum class too and how it responds
-# to assigning labels. 
+# to assigning labels.
 ## Why is this here? Is this deprecated? -Tony
 def read_reference(filename):
     data = []
@@ -1940,7 +1940,7 @@ def read_reference(filename):
     return np.array(data)
 
 
-## This is also part of the read_reference function above, but I think these 
+## This is also part of the read_reference function above, but I think these
 ## labels and attributes are important for handleing data.
 # Shouldn't be necessary anymore.
 # This should be based by the datum type and not the length of the parts list.

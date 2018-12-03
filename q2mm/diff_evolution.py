@@ -22,52 +22,6 @@ import parameters
 logger = logging.getLogger(__name__)
 
 class DifferentialEvolution(opt.Optimizer):
-    """
-    Differential Evolution optimization (those dependent on derivatives of
-    the penalty function). See `Optimizer` for repeated documentation.
-
-    All cutoff attributes are a list of two positive floats. For new parameter
-    sets, if the radius of unsigned parameter change doesn't lie between these
-    floats, then that parameter set is ignored.
-
-    All radii attributes are a list of many positive floats, as many as you'd
-    like. This list is used to scale new parameter changes. For each new
-    parameter set, it iterates through the list from lowest to highest values.
-    If the radius of unsigned parameter change exceeds the given radius, then
-    the parameter changes are scaled to match that radius. If the radius of
-    unsigned parameter change is less than the given radius, the current
-    parameter changes are applied without modification, and the remaining radii
-    are not iterated through.
-
-    Attributes
-    ----------------
-    do_basic : bool
-    do_lagrange : bool
-    do_levenberg : bool
-    do_newton : bool
-    do_svd : bool
-    basic_cutoffs : list or None
-    basic_radii : list or None
-                  Default is [0.1, 1., 5., 10.].
-    lagrange_factors : list
-                       Default is [0.01, 0.1, 1., 10.].
-    lagrange_cutoffs : list or None
-    lagrange_radii : list or None
-                     Default is [0.1, 1., 5., 10.].
-    levenberg_factors : list
-                        Default is [0.01, 0.1, 1., 10.].
-    levenberg_cutoffs : list or None
-    levenberg_radii : list or None
-                      Default is [0.1, 1., 5., 10.].
-    newton_cutoffs : list or None
-    newton_radii : list or None
-                   Default is [0.1, 1., 5., 10.].
-    svd_factors : list or None
-                  Default is [0.001, 0.01, 0.1, 1.].
-    svd_cutoffs : list of None
-                  Default is [0.1, 10.].
-    svd_radii : list or None
-    """
     def __init__(self,
                  direc=None,
                  ff=None,
@@ -142,7 +96,7 @@ class DifferentialEvolution(opt.Optimizer):
 
         exit(0)
         param_bounds = self.set_param_bounds()
-        objective = lambda x: self.objective_function(x)        
+        objective = lambda x: self.objective_function(x)
         result = differential_evolution(objective, param_bounds, maxiter=self.maxiter,
             popsize=10, disp=True, polish=False)
         print(result.x, result.fun)

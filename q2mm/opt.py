@@ -230,7 +230,7 @@ def extract_ff_by_params(ffs, params):
     cols = [x.mm3_col for x in params]
     keep = []
     for ff in ffs:
-        row, col = map(int, re.split('\[|\]', ff.method)[3].split(','))
+        row, col = list(map(int, re.split('\[|\]', ff.method)[3].split(',')))
         if row in rows and col in cols:
             keep.append(ff)
     logger.log(20, 'KEEPING FFS FOR SIMPLEX:\n{}'.format(

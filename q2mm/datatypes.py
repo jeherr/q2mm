@@ -339,7 +339,7 @@ class TinkerFF(FF):
                                      value = float(split[4]))))
                     if split[0] in pibonds:
                         at = [split[1], split[2]]
-                        #I'm still not sure how these effect the potential 
+                        #I'm still not sure how these effect the potential
                         # energy but I believe they are correcting factors for
                         # atoms in a pi system with the pi_b being for the bond
                         # and pi_t being for torsions.
@@ -445,7 +445,7 @@ class TinkerFF(FF):
             if abs(param.value) > 999.:
                 logger.warning(
                     'Value of {} is too high! Skipping write.'.format(param))
-            #Currently this isn't to flexible. The prm file (or atleast the 
+            #Currently this isn't to flexible. The prm file (or atleast the
             # parts that are actually being paramterized have to be formatted
             # correctly. This includes the position of the columns and a space
             # at the end of every line.
@@ -865,7 +865,7 @@ class MM3(FF):
                             atm_typs = self.convert_to_types(
                                 atm_lbls, self.atom_types[-1])
                         parm_cols = line[P_1_START:P_3_END]
-                        parm_cols = map(float, parm_cols.split())
+                        parm_cols = list(map(float, parm_cols.split()))
                         self.params.extend((
                                 ParamMM3(atom_labels = atm_lbls,
                                          atom_types = atm_typs,
