@@ -35,17 +35,22 @@ class DifferentialEvolution(opt.Optimizer):
         bounds = []
         for param in self.ff.params:
             if param.ptype == "be":
-                bounds.append(0.7, 3.0)
+                bounds.append((0.9, 2.5))
             elif param.ptype == "bf":
-                bounds.append(0.0, 20.0)
+                bounds.append((0.9, 13.0))
             elif param.ptype == "q":
-                bounds.append(-10.0, 10.0)
+                bounds.append((-4.5, 3.5))
             elif param.ptype == "ae":
-                bounds.append(50.0, 180.0)
+                bounds.append((50.0, 180.0))
             elif param.ptype == "af":
-                bounds.append(0.1, 10.0)
+                bounds.append((0.1, 9.0))
             elif param.ptype == "df":
-                bounds.append(-20.0, 20.0)
+                if param.mm3_col == 1:
+                    bounds.append((-3.5, 5.0))
+                elif param.mm3_col == 2:
+                    bounds.append((-10.0, 16.0))
+                elif param.mm3_col == 3:
+                    bounds.append((-4.0, 4.0))
         return bounds
 
 
@@ -54,7 +59,12 @@ class DifferentialEvolution(opt.Optimizer):
         for idx, new_value in enumerate(new_ff_params):
             new_ff.params[idx].value = new_value
         new_ff.export_ff(lines=self.ff.lines)
-        new_ff.data = calculate.main(self.args_ff)
+        try:
+            new_ff.data = calculate.main(self.args_ff)
+            new_ff.score = compare.calculate_score(self.ref_data, new_ff.data)
+        except:
+            new_ff.score = 9999999999.0
+            pass
         new_ff.score = compare.calculate_score(self.ref_data, new_ff.data)
         opt.pretty_ff_results(new_ff, level=20)
         return new_ff.score
@@ -94,11 +104,10 @@ class DifferentialEvolution(opt.Optimizer):
         logger.log(20, 'INIT FF SCORE: {}'.format(self.ff.score))
         opt.pretty_ff_results(self.ff, level=20)
 
-        exit(0)
         param_bounds = self.set_param_bounds()
         objective = lambda x: self.objective_function(x)
         result = differential_evolution(objective, param_bounds, maxiter=self.maxiter,
-            popsize=10, disp=True, polish=False)
+            popsize=4, disp=True, polish=False)
         print(result.x, result.fun)
         if result.fun < self.ff.score:
             ff = copy.deepcopy(self.ff)

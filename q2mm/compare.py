@@ -171,12 +171,12 @@ def compare_data(r_dict, c_dict, output=None, doprint=False):
                     score_typ[c.typ + '-o'] += score
                     num_typ[c.typ + '-o'] += 1
             strings.append('  {:<30}  {:>7.2f}  {:>11.4f}  {:>11.4f}  {:>11.4f}  '\
-                       '{:>5} '.format(
+                       '{!s:>5} '.format(
                         c.lbl, r.wht, r.val, c.val, score, c.ff_row))
     strings.append('-' * 89)
     strings.append('{:<20} {:20.4f}'.format('Total score:', score_tot))
     strings.append('{:<30} {:10d}'.format('Total Num. data points:', total_num))
-    for k, v in num_typ.iteritems():
+    for k, v in num_typ.items():
         strings.append('{:<30} {:10d}'.format(k + ':', v))
     strings.append('-' * 89)
     if (sys.version_info > (3, 0)):
