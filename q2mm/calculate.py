@@ -36,6 +36,7 @@ import compare
 import datatypes
 import filetypes
 import parameters
+import localize
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ COM_LOAD_FF    = ['ma', 'mb', 'mt',
                   'ja', 'jb', 'jt']
 # Commands related to Gaussian.
 COM_GAUSSIAN   = ['ge', 'gea', 'geo', 'geao',
-                  'gh', 'geigz']
+                  'gh', 'geigz', 'gleigz']
 # Commands related to Jaguar (Schrodinger).
 COM_JAGUAR     = ['jq', 'jqh', 'jqa',
                   'je', 'jeo', 'jea', 'jeao',
@@ -332,6 +333,13 @@ def return_calculate_parser(add_help=True, parents=None):
         help=('Gaussian eigenmatrix. Incluldes all elements, but zeroes '
               'all off-diagonal elements. Uses only the .log for '
               'the eigenvalues and eigenvectors.'))
+    gau_args.add_argument(
+        '-gleigz', type=str, nargs='+', action='append',
+        default=[], metavar='somename.log',
+        help=('Gaussian eigenmatrix made from localized modes. '
+              'Incluldes all elements, but zeroes all off-diagonal '
+              'elements. Uses only the .log for the eigenvalues '
+              'and eigenvectors.'))
     # JAGUAR OPTIONS
     jag_args = parser.add_argument_group("jaguar reference data types")
     jag_args.add_argument(
@@ -1580,6 +1588,32 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
                     idx_2=y + 1)
                      for e, x, y in zip(
                     low_tri, low_tri_idx[0], low_tri_idx[1])])
+    # GAUSSIAN EIGENMATRIX FROM LOCALIZED MODES
+    filenames = chain.from_iterable(coms['gleigz'])
+    for filename in filenames:
+        log = check_outs(filename, outs, filetypes.GaussLog, direc)
+        # First get the hessian matrix and mass-weight it
+        log.read_archive()
+        hess = log.structures[0].hess
+        datatypes.mass_weight_hessian(hess, log.structures[0].atoms)
+        evecs = log.evecs
+        evals = log.evals * co.HESSIAN_CONVERSION
+        print(evals)
+        evals, modes = localize.localize_normal_modes(hess, evals, evecs)
+        print(evals)
+        exit(0)
+        eigenmatrix = np.diag(evals)
+        low_tri_idx = np.tril_indices_from(eigenmatrix)
+        low_tri = eigenmatrix[low_tri_idx]
+        data.extend([datatypes.Datum(
+            val=e,
+            com='gleigz',
+            typ='eig',
+            src_1=log.filename,
+            idx_1=x + 1,
+            idx_2=y + 1)
+            for e, x, y in zip(
+                low_tri, low_tri_idx[0], low_tri_idx[1])])
     # MACROMODEL EIGENMATRIX USING JAGUAR EIGENVECTORS
     filenames = chain.from_iterable(coms['mjeig'])
     for comma_sep_filenames in filenames:
