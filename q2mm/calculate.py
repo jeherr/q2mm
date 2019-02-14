@@ -1594,13 +1594,15 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         log = check_outs(filename, outs, filetypes.GaussLog, direc)
         # First get the hessian matrix and mass-weight it
         log.read_archive()
+        # Hacky way to get atomic numbers for structure because
+        # read_archive() does not set them, only sets the element
+        # Structure() should probably be set up such that it can
+        # derive elements <--> atomic_nums from each other if called
+        for atom in log.structures[0].atoms:
+            atom.atomic_num = list(co.MASSES).index(atom.element)+1
         hess = log.structures[0].hess
         datatypes.mass_weight_hessian(hess, log.structures[0].atoms)
-        evecs = log.evecs
-        evals = log.evals * co.HESSIAN_CONVERSION
-        print(evals)
-        evals, modes = localize.localize_normal_modes(hess, evals, evecs)
-        print(evals)
+        evals, modes = localize.localize_normal_modes(hess, log.structures[0], log)
         exit(0)
         eigenmatrix = np.diag(evals)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
