@@ -36,7 +36,7 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     err2 = 1e10
     isweep = 0
     # Perform the Jacobi sweeps to localize the modes
-    while ((err > thresh) or (err2 > thresh2)) and (isweep < 50):
+    while ((err > thresh) or (err2 > thresh2)) and (isweep < 10):
         isweep += 1
 
         err2 = 0.0
@@ -57,7 +57,7 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
             (isweep, p, err, err2))
     evals = np.dot(evecs, np.dot(hess, evecs.T))
     # write_gausslog(evecs, evals, structure, num_modes, num_atoms, log, filename='g.log')
-    log.evecs = evecs
+    log._evecs = evecs
     return evals
 
 def calc_p(modes, num_modes, num_atoms):
