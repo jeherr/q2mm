@@ -17,8 +17,9 @@ from __future__ import division
 
 import numpy as np
 
-def localize_normal_modes(hess, structure, log, thresh=1e-6, thresh2=1e-4):
+def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     # Get the eigenvalues and eigenvectors first
+    structure = log.structures[0]
     evals, evecs = np.linalg.eigh(hess)
     # evals = np.dot(evecs.T, np.dot(hess, evecs))
     # print(evals)
@@ -35,7 +36,7 @@ def localize_normal_modes(hess, structure, log, thresh=1e-6, thresh2=1e-4):
     err2 = 1e10
     isweep = 0
     # Perform the Jacobi sweeps to localize the modes
-    while ((err > thresh) or (err2 > thresh2)) and (isweep < 25):
+    while ((err > thresh) or (err2 > thresh2)) and (isweep < 50):
         isweep += 1
 
         err2 = 0.0
@@ -55,8 +56,9 @@ def localize_normal_modes(hess, structure, log, thresh=1e-6, thresh2=1e-4):
             " Normal mode localization: Cycle %3i    p: %8.3f   change: %10.7f  %10.5f " % \
             (isweep, p, err, err2))
     evals = np.dot(evecs, np.dot(hess, evecs.T))
-    write_gausslog(evecs, evals, structure, num_modes, num_atoms, log, filename='g.log')
-    return evals, evecs
+    # write_gausslog(evecs, evals, structure, num_modes, num_atoms, log, filename='g.log')
+    log.evecs = evecs
+    return evals
 
 def calc_p(modes, num_modes, num_atoms):
     squared_modes = np.square(modes.reshape((num_modes, num_atoms, 3)))
@@ -184,6 +186,8 @@ def write_gausslog(modes, evals, structure, num_modes, num_atoms, log, filename=
     temp_freqs = np.zeros((temp_modes.shape[0],))
     temp_freqs[:num_modes] = np.diag(evals)
 
+    atnums = [structure.atoms[i].atomic_num for i in range(num_atoms)]
+
     with open(log.path, 'r') as f:
         lines = f.readlines()
 
@@ -200,6 +204,24 @@ def write_gausslog(modes, evals, structure, num_modes, num_atoms, log, filename=
             elif 'IR Inten' in line:
                 f.write(' IR Inten    -- %10.4f             %10.4f             %10.4f \n' % (0.0, 0.0, 0.0))
             elif 'Atom  AN      X      Y      Z' in line:
-                f.write(line+'\n')
-                for k in range(num_atoms):
-                    f.write()
+                f.write(line)
+                for iatom in range(num_atoms):
+                    atnum = atnums[iatom]
+                    f.write('%4i %3i   %6.2f %6.2f %6.2f   %6.2f %6.2f %6.2f   %6.2f %6.2f %6.2f \n' %
+                            (iatom + 1, atnum,
+                             temp_modes[i, 3 * iatom], temp_modes[i, 3 * iatom + 1], temp_modes[i, 3 * iatom + 2],
+                             temp_modes[i + 1, 3 * iatom], temp_modes[i + 1, 3 * iatom + 1],
+                             temp_modes[i + 1, 3 * iatom + 2],
+                             temp_modes[i + 2, 3 * iatom], temp_modes[i + 2, 3 * iatom + 1],
+                             temp_modes[i + 2, 3 * iatom + 2],))
+                i += 3
+                next_line = j + num_atoms
+            else:
+                try:
+                    if j < next_line:
+                        continue
+                    else:
+                        f.write(line)
+                except:
+                    f.write(line)
+                    pass

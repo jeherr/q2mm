@@ -1602,9 +1602,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
             atom.atomic_num = list(co.MASSES).index(atom.element)+1
         hess = log.structures[0].hess
         datatypes.mass_weight_hessian(hess, log.structures[0].atoms)
-        evals, modes = localize.localize_normal_modes(hess, log.structures[0], log)
-        exit(0)
-        eigenmatrix = np.diag(evals)
+        eigenmatrix = localize.localize_normal_modes(hess, log)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
         data.extend([datatypes.Datum(
