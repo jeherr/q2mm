@@ -184,7 +184,8 @@ def write_gausslog(modes, evals, structure, num_modes, num_atoms, log):
     temp_freqs[:num_modes] = np.diag(evals)
 
     atnums = [structure.atoms[i].atomic_num for i in range(num_atoms)]
-
+    red_masses = np.zeros((3 * (num_modes // 3) + 3),)
+    red_masses[:num_modes] = np.sum(np.linalg.norm(modes.reshape((num_modes, num_atoms, 3)), axis=-1) / np.array(atnums), axis=-1)
     with open(log.path, 'r') as f:
         lines = f.readlines()
 
@@ -196,7 +197,8 @@ def write_gausslog(modes, evals, structure, num_modes, num_atoms, log):
                 f.write(' Frequencies -- %10.4f             %10.4f             %10.4f \n' %
                         (temp_freqs[i], temp_freqs[i + 1], temp_freqs[i + 2]))
             elif 'Red. masses' in line:
-                f.write(' Red. masses -- %10.4f             %10.4f             %10.4f \n' % (0.0, 0.0, 0.0))
+                f.write(' Red. masses -- %10.4f             %10.4f             %10.4f \n' %
+                        (red_masses[i], red_masses[i + 1], red_masses[i + 2]))
             elif 'Frc consts' in line:
                 f.write(' Frc consts  -- %10.4f             %10.4f             %10.4f \n' % (0.0, 0.0, 0.0))
             elif 'IR Inten' in line:

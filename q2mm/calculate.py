@@ -1610,7 +1610,6 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         eigenmatrix = localize.localize_normal_modes(hess, log)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
-        print(log.evecs[-1])
         data.extend([datatypes.Datum(
             val=e,
             com='gleigz',
