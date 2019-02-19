@@ -2539,7 +2539,7 @@ class Atom(object):
     @property
     def element(self):
         if self._element is None:
-            self._element = co.MASSES.items()[self.atomic_num - 1][0]
+            self._element = list(co.MASSES.items())[self.atomic_num - 1][0]
         return self._element
     @element.setter
     def element(self, value):

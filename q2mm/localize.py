@@ -17,13 +17,15 @@ from __future__ import division
 
 import numpy as np
 
+import constants as co
+
 def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     # Get the eigenvalues and eigenvectors first
     structure = log.structures[0]
-    evals, evecs = np.linalg.eigh(hess)
+    old_evals, old_evecs = np.linalg.eigh(hess)
     # Next remove the first 7 vectors and values which
     # are the rotations, translations, and the rxn coordinate
-    evals, evecs = evals[7:], np.transpose(evecs)[7:]
+    evals, evecs = old_evals[7:], np.transpose(old_evecs)[7:]
     num_modes = len(evals)
     num_atoms = len(hess) // 3
     # Now get the starting transformation (identity) matrix to perform jacobi sweeps
@@ -52,9 +54,9 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
         print(
             " Normal mode localization: Cycle %3i    p: %8.3f   change: %10.7f  %10.5f " % \
             (isweep, p, err, err2))
+    evecs = np.append(np.transpose(old_evecs[:,0:1]), evecs, axis=0)
     evals = np.dot(evecs, np.dot(hess, evecs.T))
-    write_gausslog(evecs, evals, structure, num_modes, num_atoms, log)
-    log._evecs = evecs
+    write_gausslog(evecs, evals, structure, num_atoms, log)
     return evals
 
 def calc_p(modes, num_modes, num_atoms):
@@ -173,17 +175,25 @@ def write_g98out(modes, evals, structure, num_modes, num_atoms, filename='g98.ou
                          temp_modes[i + 2, 3 * iatom], temp_modes[i + 2, 3 * iatom + 1],
                          temp_modes[i + 2, 3 * iatom + 2],))
 
-def write_gausslog(modes, evals, structure, num_modes, num_atoms, log):
+def write_gausslog(modes, evals, structure, num_atoms, log):
+    num_modes = modes.shape[0]
     if num_modes % 3 == 0:
         temp_modes = modes
     else:
         temp_modes = np.zeros((3 * (num_modes // 3) + 3, 3 * num_atoms))
         temp_modes[:num_modes, :] = modes[:, :]
 
+
+
     temp_freqs = np.zeros((temp_modes.shape[0],))
     temp_freqs[:num_modes] = np.diag(evals)
 
     atnums = [structure.atoms[i].atomic_num for i in range(num_atoms)]
+
+    mass_sqrt = np.sqrt([list(co.MASSES.items())[atnums[i] - 1][1] for i in range(num_atoms)])
+    temp_modes = temp_modes.reshape((num_modes, num_atoms, 3)) / np.expand_dims(mass_sqrt, axis=-1)
+    temp_modes = temp_modes.reshape((num_modes, num_atoms * 3))
+
     red_masses = np.zeros((3 * (num_modes // 3) + 3),)
     red_masses[:num_modes] = np.sum(np.linalg.norm(modes.reshape((num_modes, num_atoms, 3)), axis=-1) / np.array(atnums), axis=-1)
     with open(log.path, 'r') as f:
