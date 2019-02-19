@@ -185,7 +185,7 @@ def differentiate_params(params, central=True):
                 if central:
                     backward_params[i].value = original_value - param.step
             except datatypes.ParamError as e:
-                logger.warning(e.message)
+                logger.warning(e)
                 old_step = param.step
                 # New parameter step size modification.
                 # Should prevent problems with parameters trying to go
@@ -197,6 +197,7 @@ def differentiate_params(params, central=True):
                 min_allowed_change = min(
                     upper_allowed_range, lower_allowed_range)
                 param.step = min_allowed_change * 0.1
+                print(upper_allowed_range, lower_allowed_range, min_allowed_change, param.step)
                 # This was the old method. It worked for preventing parameter
                 # values from going below zero, but didn't work for much else.
                 # param.step = param.value * 0.1

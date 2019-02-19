@@ -694,6 +694,7 @@ def return_jacobian(jacob, par_file):
         logger.log(15, 'READING: {}'.format(par_file))
         f.readline() # Labels.
         whts = [float(x) for x in f.readline().split(',')] # Weights.
+        print(len(whts))
         f.readline() # Reference values.
         f.readline() # Original values.
         # This is only for central differentiation.
@@ -708,6 +709,7 @@ def return_jacobian(jacob, par_file):
             for data_ind, (inc_datum, dec_datum) in \
                     enumerate(zip(inc_data, dec_data)):
                 dydp = (inc_datum - dec_datum) / 2
+                print(data_ind)
                 jacob[data_ind, ff_ind] = whts[data_ind] * dydp
             ff_ind += 1
     return jacob

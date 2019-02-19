@@ -21,9 +21,6 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     # Get the eigenvalues and eigenvectors first
     structure = log.structures[0]
     evals, evecs = np.linalg.eigh(hess)
-    # evals = np.dot(evecs.T, np.dot(hess, evecs))
-    # print(evals)
-    # exit(0)
     # Next remove the first 7 vectors and values which
     # are the rotations, translations, and the rxn coordinate
     evals, evecs = evals[7:], np.transpose(evecs)[7:]
@@ -36,7 +33,7 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     err2 = 1e10
     isweep = 0
     # Perform the Jacobi sweeps to localize the modes
-    while ((err > thresh) or (err2 > thresh2)) and (isweep < 10):
+    while ((err > thresh) or (err2 > thresh2)) and (isweep < 2):
         isweep += 1
 
         err2 = 0.0
@@ -56,7 +53,7 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
             " Normal mode localization: Cycle %3i    p: %8.3f   change: %10.7f  %10.5f " % \
             (isweep, p, err, err2))
     evals = np.dot(evecs, np.dot(hess, evecs.T))
-    # write_gausslog(evecs, evals, structure, num_modes, num_atoms, log, filename='g.log')
+    write_gausslog(evecs, evals, structure, num_modes, num_atoms, log)
     log._evecs = evecs
     return evals
 
@@ -176,7 +173,7 @@ def write_g98out(modes, evals, structure, num_modes, num_atoms, filename='g98.ou
                          temp_modes[i + 2, 3 * iatom], temp_modes[i + 2, 3 * iatom + 1],
                          temp_modes[i + 2, 3 * iatom + 2],))
 
-def write_gausslog(modes, evals, structure, num_modes, num_atoms, log, filename='g.log'):
+def write_gausslog(modes, evals, structure, num_modes, num_atoms, log):
     if num_modes % 3 == 0:
         temp_modes = modes
     else:
@@ -191,6 +188,7 @@ def write_gausslog(modes, evals, structure, num_modes, num_atoms, log, filename=
     with open(log.path, 'r') as f:
         lines = f.readlines()
 
+    filename = log.path[:-4]+'-local'+log.path[-4:]
     with open(filename, 'w') as f:
         i = 0
         for j, line in enumerate(lines):

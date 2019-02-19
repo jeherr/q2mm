@@ -58,7 +58,7 @@ COM_MACROMODEL = ['ja', 'jb', 'jt',
                   'mq', 'mqh', 'mqa',
                   'ma', 'mb', 'mt',
                   'me', 'meo', 'mea', 'meao',
-                  'mh', 'mjeig', 'mgeig',
+                  'mh', 'mjeig', 'mgeig', 'mgleig',
                   'mp', 'mgESP', 'mjESP']
 # Commands related to Tinker.
 COM_TINKER     = ['ta','tao', 'tb', 'tbo',
@@ -466,6 +466,11 @@ def return_calculate_parser(add_help=True, parents=None):
         default=[], metavar='somename.mae,somename.log',
         help='MacroModel eigenmatrix (all elements). Uses Gaussian '
         'eigenvectors.')
+    mm_args.add_argument(
+        '-mgleig', type=str, nargs='+', action='append',
+        default=[], metavar='somename.mae,somename.log',
+        help='MacroModel eigenmatrix (all elements). Uses Gaussian '
+        'localized eigenvectors.')
     mm_args.add_argument(
         '-mp', type=str, nargs='+', action='append',
         default=[], metavar='somename.fld,somename.txt',
@@ -1605,6 +1610,7 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         eigenmatrix = localize.localize_normal_modes(hess, log)
         low_tri_idx = np.tril_indices_from(eigenmatrix)
         low_tri = eigenmatrix[low_tri_idx]
+        print(log.evecs[-1])
         data.extend([datatypes.Datum(
             val=e,
             com='gleigz',
@@ -1676,6 +1682,43 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         data.extend([datatypes.Datum(
                     val=e,
                     com='mgeig',
+                    typ='eig',
+                    src_1=name_mae,
+                    src_2=name_gau_log,
+                    idx_1=x + 1,
+                    idx_2=y + 1)
+                     for e, x, y in zip(
+                    low_tri, low_tri_idx[0], low_tri_idx[1])])
+    logger.log(15, 'TOTAL DATA POINTS: {}'.format(len(data)))
+    # MACROMODEL EIGENMATRIX USING LOCALIZED GAUSSIAN EIGENVECTORS
+    filenames = chain.from_iterable(coms['mgleig'])
+    for comma_filenames in filenames:
+        name_mae, name_gau_log = comma_filenames.split(',')
+        name_gau_log = name_gau_log[:-4]+'-local'+name_gau_log[-4:]
+        name_mae_log = inps[name_mae].name_log
+        mae = check_outs(name_mae, outs, filetypes.Mae, direc)
+        mae_log = check_outs(name_mae_log, outs, filetypes.MacroModelLog, direc)
+        gau_log = check_outs(name_gau_log, outs, filetypes.GaussLog, direc)
+        hess = mae_log.hessian
+        dummies = mae.structures[0].get_dummy_atom_indices()
+        hess_dummies = datatypes.get_dummy_hessian_indices(dummies)
+        hess = datatypes.check_mm_dummy(hess, hess_dummies)
+        evec = gau_log.evecs
+        print(evec[-1])
+        try:
+            eigenmatrix = np.dot(np.dot(evec, hess), evec.T)
+        except ValueError:
+            logger.warning('Matrices not aligned!')
+            logger.warning('Hessian retrieved from {}: {}'.format(
+                    name_mae_log, hess.shape))
+            logger.warning('Eigenvectors retrieved from {}: {}'.format(
+                    name_gau_log, evec.shape))
+            raise
+        low_tri_idx = np.tril_indices_from(eigenmatrix)
+        low_tri = eigenmatrix[low_tri_idx]
+        data.extend([datatypes.Datum(
+                    val=e,
+                    com='mgleig',
                     typ='eig',
                     src_1=name_mae,
                     src_2=name_gau_log,
