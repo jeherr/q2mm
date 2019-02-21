@@ -225,7 +225,7 @@ def write_gausslog(modes, evals, structure, num_atoms, log):
                              temp_modes[i + 2, 3 * iatom], temp_modes[i + 2, 3 * iatom + 1],
                              temp_modes[i + 2, 3 * iatom + 2],))
                 i += 3
-                next_line = j + num_atoms
+                next_line = j + num_atoms + 1
             else:
                 try:
                     if j < next_line:

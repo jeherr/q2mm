@@ -1762,7 +1762,7 @@ class Mae(SchrodingerFile):
             for x in self.commands):
             com_opts['sp'] = True
         # Command meig is depreciated.
-        if any(x in ['mh', 'meig', 'mjeig', 'mgeig'] for x in self.commands):
+        if any(x in ['mh', 'meig', 'mjeig', 'mgeig', 'mgleig'] for x in self.commands):
             if com_opts['strs']:
                 raise Exception(
                     "Can't obtain the Hessian from a Maestro file "

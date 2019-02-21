@@ -1688,7 +1688,6 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
                     idx_2=y + 1)
                      for e, x, y in zip(
                     low_tri, low_tri_idx[0], low_tri_idx[1])])
-    logger.log(15, 'TOTAL DATA POINTS: {}'.format(len(data)))
     # MACROMODEL EIGENMATRIX USING LOCALIZED GAUSSIAN EIGENVECTORS
     filenames = chain.from_iterable(coms['mgleig'])
     for comma_filenames in filenames:
@@ -1703,7 +1702,6 @@ def collect_data(coms, inps, direc='.', sub_names=['OPT'], invert=None):
         hess_dummies = datatypes.get_dummy_hessian_indices(dummies)
         hess = datatypes.check_mm_dummy(hess, hess_dummies)
         evec = gau_log.evecs
-        print(evec[-1])
         try:
             eigenmatrix = np.dot(np.dot(evec, hess), evec.T)
         except ValueError:
