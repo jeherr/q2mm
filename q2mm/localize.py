@@ -19,7 +19,7 @@ import numpy as np
 
 import constants as co
 
-def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
+def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-7):
     # Get the eigenvalues and eigenvectors first
     structure = log.structures[0]
     old_evals, old_evecs = np.linalg.eigh(hess)
@@ -33,9 +33,10 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
     # evals = np.diag(np.dot(evecs.T, np.dot(hess, evecs)))
     err = 1e10
     err2 = 1e10
+    combinations = np.math.factorial(num_modes) / (np.math.factorial(num_modes - 2) * np.math.factorial(2))
     isweep = 0
     # Perform the Jacobi sweeps to localize the modes
-    while ((err > thresh) or (err2 > thresh2)) and (isweep < 2):
+    while ((err > thresh) or (err2 > thresh2)) and (isweep < 100):
         isweep += 1
 
         err2 = 0.0
@@ -47,12 +48,12 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-4):
                 transform_mat = np.dot(rotation_matrix(i, j, alpha, num_modes), transform_mat)
 
                 err2 += abs(alpha)
-
+        err2 /= combinations
         p = calc_p(evecs, num_modes, num_atoms)
         err = p - old_p
 
         print(
-            " Normal mode localization: Cycle %3i    p: %8.3f   change: %10.7f  %10.5f " % \
+            " Normal mode localization: Cycle %3i    p: %8.3f   change: %14.8f  %14.8f " % \
             (isweep, p, err, err2))
     evecs = np.append(np.transpose(old_evecs[:,0:1]), evecs, axis=0)
     evals = np.dot(evecs, np.dot(hess, evecs.T))
@@ -235,3 +236,8 @@ def write_gausslog(modes, evals, structure, num_atoms, log):
                 except:
                     f.write(line)
                     pass
+
+def select_relevant_modes(modes):
+    # Should select which modes are most relevant to the
+    # parameters being optimized and discard the rest
+    return modes

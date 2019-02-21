@@ -37,7 +37,6 @@ try:
     from schrodinger import structure as sch_str
     from schrodinger.application.jaguar import input as jag_in
 except:
-    print("Schrodinger not installed, limited functionality")
     pass
 
 import constants as co
