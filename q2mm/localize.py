@@ -55,8 +55,9 @@ def localize_normal_modes(hess, log, thresh=1e-6, thresh2=1e-7):
         print(
             " Normal mode localization: Cycle %3i    p: %8.3f   change: %14.8f  %14.8f " % \
             (isweep, p, err, err2))
-    overlap_matrix = get_modes_overlap(evecs, np.transpose(old_evecs)[7:])
-    evecs = np.append(np.transpose(old_evecs[:,0:1]), evecs, axis=0)
+    similarity_matrix = get_cosine_similarity(evecs, np.transpose(old_evecs)[7:])
+    check_prelocalization_criteria(similarity_matrix)
+    evecs = np.append(np.transpose(old_evecs[:, 0:1]), evecs, axis=0)
     evals = np.dot(evecs, np.dot(hess, evecs.T))
     # write_gausslog(evecs, evals, structure, num_atoms, log)
     return evals
@@ -101,21 +102,6 @@ def rotation_matrix(i, j, alpha, num_modes):
     rmat[j, i] = -np.sin(alpha)
     rmat[j, j] = np.cos(alpha)
     return rmat
-
-def get_coupling_matrix(hessian=False) :
-    # coupling matrix is defined as in the paper:
-    # eigenvectors are rows of U / columns of U^t = transmat
-    # eigenvectors give normal mode in basis of localized modes
-    if not hessian :
-        diag = np.diag(startmodes.freqs)
-    else :
-        freqs = self.startmodes.freqs.copy() * 1e2 * Constants.cvel_ms
-        # now freq is nu[1/s]
-        omega = 2.0 * math.pi * freqs
-        # now omega is omega[1/s]
-        omega = omega**2
-        omega = omega/(Constants.Hartree_in_Joule/(Constants.amu_in_kg*Constants.Bohr_in_Meter**2))
-        diag =  numpy.diag(omega)
 
 def write_g98out(modes, evals, structure, num_modes, num_atoms, filename='g98.out'):
     if num_modes % 3 == 0:
@@ -185,8 +171,6 @@ def write_gausslog(modes, evals, structure, num_atoms, log):
         temp_modes = np.zeros((3 * (num_modes // 3) + 3, 3 * num_atoms))
         temp_modes[:num_modes, :] = modes[:, :]
 
-
-
     temp_freqs = np.zeros((temp_modes.shape[0],))
     temp_freqs[:num_modes] = np.diag(evals)
 
@@ -243,25 +227,59 @@ def select_relevant_modes(modes):
     # parameters being optimized and discard the rest
     return modes
 
-def get_modes_overlap(modes, original_modes):
-    # Returns the overlap matrix between the normal modes
-    # and the localized modes by taking all possible dot
-    # products.
-    overlap_matrix = np.zeros((len(modes), len(modes)))
+def get_cosine_similarity(modes, original_modes):
+    # Returns the cosine similarity matrix between the
+    # normal modes and the localized modes by taking all
+    # possible dot products.
+    similarity_matrix = np.zeros((len(modes), len(modes)))
     for i in range(len(modes)):
-        ii_overlap = np.dot(modes[i], original_modes[i])
-        overlap_matrix[i,i] = ii_overlap
+        ii_overlap = np.dot(modes[i], original_modes[i]) / (np.linalg.norm(modes[i]) * np.linalg.norm(original_modes[i]))
+        similarity_matrix[i,i] = ii_overlap
         for j in range(i + 1, len(modes)):
-            ij_overlap = np.dot(modes[i], original_modes[j])
-            overlap_matrix[i,j] = ij_overlap
-            overlap_matrix[j,i] = ij_overlap
-    # np.savetxt("overlap_modes.txt", overlap_matrix)
-    return overlap_matrix
+            ij_overlap = np.dot(modes[i], original_modes[j]) / (np.linalg.norm(modes[i]) * np.linalg.norm(original_modes[j]))
+            similarity_matrix[i,j] = ij_overlap
+            similarity_matrix[j,i] = ij_overlap
+    np.savetxt("cos_sim_modes.txt", similarity_matrix)
+    return similarity_matrix
 
-def check_prelocalization_criteria(overlap_matrix):
+def check_prelocalization_criteria(similarity_matrix):
+    max_args = np.argsort(similarity_matrix, axis=1)[::-1]
+    matched_idx = []
+    arg_order = []
+    for i in range(len(similarity_matrix)):
+        arg_trial_idx = 0
+        while True:
+            max_idx = max_args[i,arg_trial_idx]
+            if max_idx in matched_idx:
+                arg_trial_idx += 1
+            else:
+                matched_idx.append(max_idx)
+                arg_order.append(arg_trial_idx)
+                break
+    switch_iter = 0
+    while True:
+        switch_iter += 1
+        flag = True
+        for i in range(len(similarity_matrix)):
+            for j in range(i+1, len(similarity_matrix)):
+                i_arg, j_arg = matched_idx[i], matched_idx[j]
+                current_overlap = np.square(similarity_matrix[i,i_arg]) + np.square(similarity_matrix[j,j_arg])
+                switch_overlap = np.square(similarity_matrix[i,j_arg]) + np.square(similarity_matrix[j,i_arg])
+                if switch_overlap > current_overlap:
+                    flag = False
+                    matched_idx[j], matched_idx[i] = matched_idx[i], matched_idx[j]
+        if flag:
+            break
+    overlaps = [similarity_matrix[i, matched_idx[i]] for i in range(len(similarity_matrix))]
+    print(np.sqrt(np.sum(np.square(overlaps)) / len(similarity_matrix)))
+    # print(np.sqrt(sum(overlaps) / len(overlap_matrix)))
+    # print(min(overlaps))
+    # print(max(overlaps))
+    # for i in range(len(overlap_matrix)):
+    #
     # Create a master set for the idx of all possible modes
-    modes_idx_list = set(range(len(overlap_matrix)))
-    mode_mode_dict = {}
+    # modes_idx_list = set(range(len(overlap_matrix)))
+    # mode_mode_dict = {}
 
 
 
